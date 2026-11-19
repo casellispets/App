@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel admin · Caselli's Pets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFF5DF; --beige:#E9E2D3; --ink:#1E1E1E;
+    --pine:#106B3A; --pine-dark:#0B4D29; --pine-light:#E4F0E8;
+    --orange:#F36B32; --orange-light:#FDE7DC;
+    --yellow:#FFD45A; --yellow-light:#FFF4D7;
+    --leaf:#A7C77C; --leaf-light:#EFF5E6;
+    --fuchsia:#FF2D8F;
+    --white:#FFFFFF; --ink-soft:#5B6158; --ink-faint:#8A8F85;
+    --border:rgba(16,61,37,.13); --shadow:rgba(23,50,33,.14);
+    --font-display:'Baloo 2', ui-rounded, sans-serif;
+    --font-body:'Nunito', ui-sans-serif, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:var(--cream); color:var(--ink);
+    font-family:var(--font-body); padding:18px;
+  }
+  h1,h2{font-family:var(--font-display); margin:0;}
+  .wrap{max-width:1180px; margin:0 auto;}
+
+  /* ---------- login ---------- */
+  #login{
+    max-width:360px; margin:12vh auto; background:var(--white); border:1px solid var(--border);
+    border-radius:20px; padding:28px; box-shadow:0 18px 34px -18px var(--shadow); text-align:center;
+  }
+  #login h1{font-size:22px; color:var(--pine-dark);}
+  #login p{color:var(--ink-soft); font-size:13.5px; margin-top:6px;}
+  #login input{
+    width:100%; margin-top:18px; padding:13px 14px; border-radius:12px; border:1.5px solid var(--border);
+    font-size:15px; font-family:inherit; background:var(--cream);
+  }
+  #login button{
+    width:100%; margin-top:12px; padding:13px; border:none; border-radius:12px; background:var(--pine);
+    color:#fff; font-weight:800; font-size:15px; cursor:pointer; font-family:var(--font-display);
+  }
+  #login button:hover{background:var(--pine-dark);}
+  #login .err{color:var(--fuchsia); font-size:13px; margin-top:10px; min-height:16px; font-weight:700;}
+
+  /* ---------- dashboard ---------- */
+  #dash{display:none;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
+  .topbar h1{font-size:21px; color:var(--pine-dark);}
+  .topbar .sub{color:var(--ink-soft); font-size:12.5px; margin-top:2px;}
+  .actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .btn{
+    padding:10px 16px; border-radius:11px; border:none; font-weight:800; font-size:13.5px;
+    cursor:pointer; font-family:var(--font-display); display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn-primary{background:var(--pine); color:#fff;}
+  .btn-primary:hover{background:var(--pine-dark);}
+  .btn-ghost{background:var(--white); color:var(--pine-dark); border:1.5px solid var(--border);}
+  .btn-ghost:hover{background:var(--pine-light);}
+
+  .stats{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+  .stat{
+    background:var(--white); border:1px solid var(--border); border-radius:14px; padding:12px 16px; min-width:120px;
+    box-shadow:0 8px 18px -14px var(--shadow);
+  }
+  .stat b{display:block; font-family:var(--font-display); font-size:21px; color:var(--pine-dark);}
+  .stat span{font-size:11.5px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.3px;}
+
+  .toolbar{display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;}
+  .toolbar input{
+    flex:1; min-width:220px; padding:11px 14px; border-radius:11px; border:1.5px solid var(--border);
+    font-family:inherit; font-size:14px; background:var(--white);
+  }
+
+  .table-wrap{
+    background:var(--white); border:1px solid var(--border); border-radius:16px; overflow:auto;
+    box-shadow:0 10px 24px -18px var(--shadow);
+  }
+  table{border-collapse:collapse; width:100%; min-width:980px; font-size:13px;}
+  thead th{
+    position:sticky; top:0; background:var(--pine-light); color:var(--pine-dark); text-align:left;
+    padding:11px 12px; font-weight:800; font-size:11.5px; text-transform:uppercase; letter-spacing:.3px;
+    border-bottom:1.5px solid var(--border); white-space:nowrap;
+  }
+  tbody td{padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top;}
+  tbody tr:hover{background:var(--cream);}
+  .pill{
+    display:inline-block; padding:3px 10px; border-radius:99px; font-weight:800; font-size:11.5px;
+  }
+  .muted{color:var(--ink-faint);}
+  .nowrap{white-space:nowrap;}
+  .del{background:none; border:none; cursor:pointer; color:var(--ink-faint); font-size:16px;}
+  .del:hover{color:var(--fuchsia);}
+  .empty{padding:40px; text-align:center; color:var(--ink-faint);}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h1>Panel Caselli&rsquo;s Pets</h1>
+  <p>Ingresa la clave de administración para ver los resultados de las evaluaciones.</p>
+  <input id="pw" type="password" placeholder="Clave de acceso" autofocus>
+  <button id="loginBtn">Entrar</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<div id="dash">
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>Resultados del Test de Bienestar Articular</h1>
+        <div class="sub" id="subCount">0 registros</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="refreshBtn">↻ Actualizar</button>
+        <button class="btn btn-ghost" id="exportBtn">⬇ Exportar CSV</button>
+        <button class="btn btn-ghost" id="logoutBtn">Salir</button>
+      </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="toolbar">
+      <input id="search" type="text" placeholder="Buscar por perro, propietario o raza...">
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th><th>Perro</th><th>Raza</th><th>Edad</th><th>Peso</th>
+            <th>Propietario</th><th>Contacto</th>
+            <th>Movilidad</th><th>Dolor</th><th>Actividad</th><th>Calidad</th>
+            <th>Total</th><th>Nivel</th><th>Alarmas</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="emptyMsg" style="display:none;">Todavía no hay tests guardados.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let TOKEN = localStorage.getItem('caselli_admin_token') || '';
+let DATA = [];
+
+function showDash(){ $('#login').style.display='none'; $('#dash').style.display='block'; load(); }
+function showLogin(){ $('#dash').style.display='none'; $('#login').style.display='block'; }
+
+$('#loginBtn').addEventListener('click', doLogin);
+$('#pw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function doLogin(){
+  const pw = $('#pw').value;
+  $('#loginErr').textContent = '';
+  try{
+    const r = await fetch('/api/login', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pw})
+    });
+    if(!r.ok){ $('#loginErr').textContent = 'Clave incorrecta.'; return; }
+    const { token } = await r.json();
+    TOKEN = token;
+    localStorage.setItem('caselli_admin_token', token);
+    showDash();
+  }catch(e){ $('#loginErr').textContent = 'No se pudo conectar con el servidor.'; }
+}
+
+$('#logoutBtn').addEventListener('click', () => {
+  TOKEN = '';
+  localStorage.removeItem('caselli_admin_token');
+  showLogin();
+});
+$('#refreshBtn').addEventListener('click', load);
+$('#search').addEventListener('input', render);
+$('#exportBtn').addEventListener('click', exportCSV);
+
+async function load(){
+  try{
+    const r = await fetch('/api/registros', { headers: { Authorization: 'Bearer ' + TOKEN } });
+    if(r.status === 401){ showLogin(); return; }
+    DATA = await r.json();
+    render();
+  }catch(e){
+    $('#rows').innerHTML = '';
+    $('#emptyMsg').style.display = 'block';
+    $('#emptyMsg').textContent = 'No se pudo conectar con el servidor.';
+  }
+}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function levelColor(nivel){
+  const n = (nivel||'').toLowerCase();
+  if(n.includes('1')) return {bg:'var(--leaf-light)', fg:'#4C7A2E'};
+  if(n.includes('2')) return {bg:'var(--yellow-light)', fg:'#A66A00'};
+  if(n.includes('3')) return {bg:'var(--orange-light)', fg:'var(--orange)'};
+  return {bg:'color-mix(in srgb, var(--fuchsia) 14%, var(--orange-light))', fg:'var(--fuchsia)'};
+}
+
+function render(){
+  const q = ($('#search').value || '').toLowerCase().trim();
+  const filtered = DATA.filter(r => {
+    if(!q) return true;
+    return [r.dog?.name, r.owner?.name, r.dog?.breed, r.owner?.contact]
+      .some(v => (v||'').toLowerCase().includes(q));
+  });
+
+  $('#subCount').textContent = DATA.length + (DATA.length===1?' registro':' registros') +
+    (q ? ` · ${filtered.length} filtrados` : '');
+
+  renderStats();
+
+  if(!filtered.length){
+    $('#rows').innerHTML = '';
+    $('#emptyMsg').style.display = 'block';
+    $('#emptyMsg').textContent = DATA.length ? 'Sin resultados para esa búsqueda.' : 'Todavía no hay tests guardados.';
+    return;
+  }
+  $('#emptyMsg').style.display = 'none';
+
+  $('#rows').innerHTML = filtered.map(r => {
+    const d = r.dog || {}, o = r.owner || {}, s = r.scores || {};
+    const lvl = levelColor(r.nivel);
+    const fecha = r.fecha ? new Date(r.fecha).toLocaleString('es-PE', {dateStyle:'short', timeStyle:'short'}) : '';
+    const alarmas = (r.alarms||[]).filter(a=>a!=='none').length;
+    return `<tr>
+      <td class="nowrap muted">${esc(fecha)}</td>
+      <td><b>${esc(d.name)}</b></td>
+      <td class="muted">${esc(d.breed)||'-'}</td>
+      <td>${esc(d.age)||'-'}</td>
+      <td>${esc(d.weight)?esc(d.weight)+' kg':'-'}</td>
+      <td>${esc(o.name)||'-'}</td>
+      <td>${esc(o.contact)||'-'}</td>
+      <td>${s.movilidad ?? '-'}</td>
+      <td>${s.dolor ?? '-'}</td>
+      <td>${s.actividad ?? '-'}</td>
+      <td>${s.calidad ?? '-'}</td>
+      <td><b>${r.total ?? '-'}</b>/${r.maxScore || 48}</td>
+      <td><span class="pill" style="background:${lvl.bg};color:${lvl.fg};">${esc(r.nivel)||'-'}</span></td>
+      <td>${alarmas ? `<span class="pill" style="background:var(--orange-light);color:var(--orange);">${alarmas} ⚠</span>` : '<span class="muted">-</span>'}</td>
+      <td><button class="del" title="Eliminar" data-id="${esc(r.id)}">🗑</button></td>
+    </tr>`;
+  }).join('');
+
+  document.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if(!confirm('¿Eliminar este registro?')) return;
+      await fetch('/api/registros/' + btn.dataset.id, { method:'DELETE', headers:{ Authorization:'Bearer '+TOKEN } });
+      load();
+    });
+  });
+}
+
+function renderStats(){
+  const total = DATA.length;
+  const alarmCount = DATA.filter(r => (r.alarms||[]).some(a=>a!=='none')).length;
+  const avg = total ? Math.round(DATA.reduce((a,r)=>a+((r.total||0)/(r.maxScore||48))*24,0) / total) : 0;
+  const last7 = DATA.filter(r => r.fecha && (Date.now() - new Date(r.fecha).getTime()) < 7*24*3600*1000).length;
+  $('#stats').innerHTML = `
+    <div class="stat"><b>${total}</b><span>Tests totales</span></div>
+    <div class="stat"><b>${last7}</b><span>Últimos 7 días</span></div>
+    <div class="stat"><b>${avg}/24</b><span>Puntaje promedio normalizado</span></div>
+    <div class="stat"><b>${alarmCount}</b><span>Con señales de alarma</span></div>
+  `;
+}
+
+function exportCSV(){
+  const headers = ['Fecha','Perro','Raza','Edad','Peso','Propietario','Contacto','Movilidad','Dolor','Actividad','Calidad','Total','Puntaje máximo','Nivel','Alarmas'];
+  const rows = DATA.map(r => {
+    const d = r.dog||{}, o = r.owner||{}, s = r.scores||{};
+    return [
+      r.fecha||'', d.name||'', d.breed||'', d.age||'', d.weight||'',
+      o.name||'', o.contact||'', s.movilidad??'', s.dolor??'', s.actividad??'', s.calidad??'',
+      r.total??'', r.maxScore||48, r.nivel||'', (r.alarms||[]).filter(a=>a!=='none').length
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'caselli-pets-tests.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+if(TOKEN) showDash(); else showLogin();
+</script>
+</body>
+</html>

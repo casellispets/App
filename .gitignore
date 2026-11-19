@@ -1,0 +1,8 @@
+node_modules/
+data/registros.json
+.env
+config.json
+_pool/
+_pool_dl.ps1
+npm-debug.log*
+.DS_Store
