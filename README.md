@@ -6,7 +6,8 @@ App + servidor para Caselli's Pets: un test de 8 preguntas que evalúa movilidad
 - `public/index.html` — la app del test que completan los clientes.
 - `public/admin.html` — panel de administración (protegido con clave) para ver todos los tests guardados.
 - `server.js` — servidor Node/Express: recibe cada test y lo guarda, y sirve el panel de admin.
-- `data/registros.json` — base de datos en JSON con todos los tests (se crea sola al arrancar).
+- PostgreSQL — almacenamiento persistente en producción.
+- `data/registros.json` — respaldo local para desarrollo cuando no existe `DATABASE_URL`.
 - `config.example.json` — ejemplo de configuración local. La clave real no se sube al repositorio.
 
 ## Cómo correrlo
@@ -25,7 +26,7 @@ App + servidor para Caselli's Pets: un test de 8 preguntas que evalúa movilidad
    - Test: `http://localhost:3000`
    - Panel de administración: `http://localhost:3000/admin.html`
 
-Cada test que se completa se guarda automáticamente en `data/registros.json` y aparece en el panel de admin.
+Cada test que se completa se guarda automáticamente en PostgreSQL y aparece en el panel de admin. En desarrollo local, si no se define `DATABASE_URL`, se utiliza `data/registros.json`.
 
 ## Configurar la clave del panel de administración
 En producción, crear la variable de entorno `ADMIN_PASSWORD` desde el panel del hosting. Para desarrollo local también se puede copiar `config.example.json` como `config.json` y cambiar `adminPassword`. `config.json` está excluido de Git para que la clave real no se publique.
@@ -53,7 +54,7 @@ Cuando el servicio ya esté publicado en Render:
 
 Render configura y renueva automáticamente el certificado HTTPS. No conviene inventar los registros DNS antes de crear el servicio: deben copiarse los valores concretos que Render indique para ese dominio. Documentación oficial: https://render.com/docs/custom-domains
 
-**Importante:** en el plan gratuito de Render, los archivos del servicio (incluido `data/registros.json`) no son permanentes — se pueden borrar si el servicio se reinicia o "duerme". Para un uso real del negocio (que los datos no se pierdan), conviene pasar a un plan pago con disco persistente, o migrar el guardado a una base de datos externa (por ejemplo una hoja de cálculo de Google o una base de datos gratuita como Supabase). Mientras tanto, se recomienda exportar los datos a CSV seguido desde el panel de admin (botón "Exportar CSV").
+En producción se debe definir `DATABASE_URL`. Render puede inyectarla automáticamente desde una base PostgreSQL vinculada. El archivo JSON queda únicamente como alternativa de desarrollo local.
 
 ## Subir a GitHub
 ```

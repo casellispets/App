@@ -7,6 +7,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,6 +15,11 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'registros.json');
 const CONFIG_FILE = path.join(__dirname, 'config.json');
+const DATABASE_URL = process.env.DATABASE_URL || '';
+const db = DATABASE_URL ? new Pool({
+  connectionString: DATABASE_URL,
+  ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : undefined,
+}) : null;
 
 /* ---------- config (clave del panel de admin) ---------- */
 function loadConfig(){
@@ -46,6 +52,48 @@ function readRegistros(){
 function writeRegistros(list){
   ensureDataFile();
   fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2));
+}
+
+async function initDatabase(){
+  if(!db) return;
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS registros (
+      id UUID PRIMARY KEY,
+      fecha TIMESTAMPTZ NOT NULL,
+      contenido JSONB NOT NULL
+    )
+  `);
+  await db.query('CREATE INDEX IF NOT EXISTS registros_fecha_idx ON registros (fecha DESC)');
+}
+
+async function listRegistros(){
+  if(!db) return readRegistros();
+  const result = await db.query('SELECT contenido FROM registros ORDER BY fecha DESC');
+  return result.rows.map(row => row.contenido);
+}
+
+async function saveRegistro(registro){
+  if(!db){
+    const list = readRegistros();
+    list.push(registro);
+    writeRegistros(list);
+    return;
+  }
+  await db.query(
+    'INSERT INTO registros (id, fecha, contenido) VALUES ($1, $2, $3::jsonb)',
+    [registro.id, registro.fecha, JSON.stringify(registro)]
+  );
+}
+
+async function removeRegistro(id){
+  if(!db){
+    const list = readRegistros();
+    const next = list.filter(r => r.id !== id);
+    writeRegistros(next);
+    return list.length - next.length;
+  }
+  const result = await db.query('DELETE FROM registros WHERE id = $1', [id]);
+  return result.rowCount;
 }
 
 /* ---------- sesiones de admin (tokens en memoria) ---------- */
@@ -83,11 +131,15 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'caselli-pets-bienestar' });
+  res.json({
+    ok: true,
+    service: 'caselli-pets-bienestar',
+    storage: db ? 'postgresql' : 'json-local',
+  });
 });
 
 /* ---------- API pública: guardar un test ---------- */
-app.post('/api/registros', (req, res) => {
+app.post('/api/registros', async (req, res, next) => {
   const body = req.body || {};
   const registro = {
     id: crypto.randomUUID(),
@@ -111,10 +163,12 @@ app.post('/api/registros', (req, res) => {
     questionCount: Number(body.questionCount) || 8,
     nivel: String(body.nivel || '').slice(0, 80),
   };
-  const list = readRegistros();
-  list.push(registro);
-  writeRegistros(list);
-  res.status(201).json({ ok: true, id: registro.id });
+  try{
+    await saveRegistro(registro);
+    res.status(201).json({ ok: true, id: registro.id });
+  }catch(error){
+    next(error);
+  }
 });
 
 /* ---------- API de administración ---------- */
@@ -126,24 +180,45 @@ app.post('/api/login', (req, res) => {
   res.status(401).json({ error: 'Clave incorrecta' });
 });
 
-app.get('/api/registros', requireAuth, (req, res) => {
-  const list = readRegistros().sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
-  res.json(list);
+app.get('/api/registros', requireAuth, async (_req, res, next) => {
+  try{
+    const list = await listRegistros();
+    list.sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
+    res.json(list);
+  }catch(error){
+    next(error);
+  }
 });
 
-app.delete('/api/registros/:id', requireAuth, (req, res) => {
-  const list = readRegistros();
-  const next = list.filter(r => r.id !== req.params.id);
-  writeRegistros(next);
-  res.json({ ok: true, removed: list.length - next.length });
+app.delete('/api/registros/:id', requireAuth, async (req, res, next) => {
+  try{
+    const removed = await removeRegistro(req.params.id);
+    res.json({ ok: true, removed });
+  }catch(error){
+    next(error);
+  }
 });
 
-app.listen(PORT, () => {
-  console.log('');
-  console.log('  Caselli\'s Pets - Test de Bienestar Articular');
-  console.log('  ------------------------------------------------');
-  console.log(`  Test:        http://localhost:${PORT}`);
-  console.log(`  Panel admin: http://localhost:${PORT}/admin.html`);
-  console.log('  Clave admin: configurada mediante ADMIN_PASSWORD o config.json local');
-  console.log('');
+app.use((error, _req, res, _next) => {
+  console.error(error);
+  res.status(500).json({ error: 'No se pudo completar la operación' });
+});
+
+async function start(){
+  await initDatabase();
+  app.listen(PORT, () => {
+    console.log('');
+    console.log('  Caselli\'s Pets - Test de Bienestar Articular');
+    console.log('  ------------------------------------------------');
+    console.log(`  Test:        http://localhost:${PORT}`);
+    console.log(`  Panel admin: http://localhost:${PORT}/admin.html`);
+    console.log('  Clave admin: configurada mediante ADMIN_PASSWORD o config.json local');
+    console.log(`  Datos:       ${db ? 'PostgreSQL persistente' : 'archivo JSON local'}`);
+    console.log('');
+  });
+}
+
+start().catch(error => {
+  console.error('No se pudo iniciar la aplicación:', error);
+  process.exit(1);
 });
