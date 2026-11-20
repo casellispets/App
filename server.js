@@ -19,6 +19,9 @@ const DATABASE_URL = process.env.DATABASE_URL || '';
 const db = DATABASE_URL ? new Pool({
   connectionString: DATABASE_URL,
   ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : undefined,
+  max: 3,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000,
 }) : null;
 
 /* ---------- config (clave del panel de admin) ---------- */
