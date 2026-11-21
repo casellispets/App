@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'registros.json');
 const CONFIG_FILE = path.join(__dirname, 'config.json');
-const DATABASE_URL = process.env.DATABASE_URL || '';
+const DATABASE_URL = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || '';
 const db = DATABASE_URL ? new Pool({
   connectionString: DATABASE_URL,
   ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : undefined,
