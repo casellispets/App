@@ -133,6 +133,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res) => { res.set('Cache-Control', 'no-store'); },
 }));
 
+app.get('/mi-cuenta', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'mi-cuenta.html'));
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,

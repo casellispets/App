@@ -5,6 +5,7 @@ App + servidor para Caselli's Pets: un test de 8 preguntas que evalúa movilidad
 ## Contenido
 - `public/index.html` — la app del test que completan los clientes.
 - `public/admin.html` — panel de administración (protegido con clave) para ver todos los tests guardados.
+- `public/mi-cuenta.html` — maqueta responsive del futuro panel del cliente, disponible en `/mi-cuenta`.
 - `server.js` — servidor Node/Express: recibe cada test y lo guarda, y sirve el panel de admin.
 - PostgreSQL — almacenamiento persistente en producción.
 - `data/registros.json` — respaldo local para desarrollo cuando no existe `DATABASE_URL`.
